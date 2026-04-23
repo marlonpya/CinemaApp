@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base dark theme — all activities inherit from this -->
+    <style name="Theme.MyAppZegel" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/bg_main</item>
+        <item name="android:statusBarColor">@color/bg_main</item>
+        <item name="android:navigationBarColor">@color/bg_main</item>
+    </style>
+
+    <!-- Toolbar back button style -->
+    <style name="Widget.CineFood.BackButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="rippleColor">@color/bg_surface</item>
+    </style>
+
+    <!-- "Add to Order" button -->
+    <style name="Widget.CineFood.PrimaryButton" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/btn_primary</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <!-- Section header text -->
+    <style name="TextAppearance.CineFood.SectionTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+</resources>

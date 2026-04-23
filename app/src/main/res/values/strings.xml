@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">CineFood</string>
+
+    <!-- Home Screen -->
+    <string name="hint_search">Buscar películas o comida…</string>
+    <string name="section_movies">🎬 Películas Destacadas</string>
+    <string name="section_food">🍔 Ofertas de Comida</string>
+    <string name="label_see_all">Ver todo</string>
+
+    <!-- Movie Detail -->
+    <string name="label_director">Director</string>
+    <string name="label_duration">Duración</string>
+    <string name="label_genre">Género</string>
+    <string name="label_year">Año</string>
+    <string name="label_rating">Calificación</string>
+    <string name="label_synopsis">Sinopsis</string>
+
+    <!-- Food Detail -->
+    <string name="label_price">Precio</string>
+    <string name="label_category">Categoría</string>
+    <string name="label_prep_time">Tiempo de preparación</string>
+    <string name="btn_add_order">Agregar al Pedido</string>
+    <string name="label_availability">Disponibilidad</string>
+
+    <!-- Navigation -->
+    <string name="btn_back">← Atrás</string>
+
+    <!-- Content descriptions for accessibility -->
+    <string name="cd_movie_poster">Póster de la película</string>
+    <string name="cd_food_image">Imagen del plato</string>
+</resources>
