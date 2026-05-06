@@ -1,21 +1,16 @@
 package com.microsol.myappzegel.presentation.fooddetail
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import coil.load
+import com.microsol.myappzegel.data.remote.RetrofitClient
 import com.microsol.myappzegel.data.repository.FoodRepositoryImpl
 import com.microsol.myappzegel.databinding.ActivityFoodDetailBinding
 import com.microsol.myappzegel.domain.usecase.GetFoodsUseCase
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Food Detail Screen
-//
-// Shows full details for a selected food item and allows the user to "add to
-// order". The button action is handled by the ViewModel (business decision)
-// while the UI feedback (Toast) is handled by the Activity (UI concern).
-// This separation is a key benefit of MVVM.
-// ─────────────────────────────────────────────────────────────────────────────
 class FoodDetailActivity : AppCompatActivity() {
 
     companion object {
@@ -26,7 +21,7 @@ class FoodDetailActivity : AppCompatActivity() {
 
     private val viewModel: FoodDetailViewModel by viewModels {
         FoodDetailViewModelFactory(
-            GetFoodsUseCase(FoodRepositoryImpl())
+            GetFoodsUseCase(FoodRepositoryImpl(RetrofitClient.mealDbApi))
         )
     }
 
@@ -42,7 +37,6 @@ class FoodDetailActivity : AppCompatActivity() {
             viewModel.loadFood(foodId)
         }
 
-        // KOTLIN CONCEPT: Lambda in setOnClickListener
         binding.btnAddToOrder.setOnClickListener {
             viewModel.addToOrder()
         }
@@ -51,31 +45,51 @@ class FoodDetailActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        viewModel.isLoading.observe(this) { loading ->
+            binding.cardFoodContent.visibility = if (loading) View.INVISIBLE else View.VISIBLE
+        }
+
+        viewModel.error.observe(this) { errorMsg ->
+            if (!errorMsg.isNullOrBlank()) {
+                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
+            }
+        }
+
         viewModel.food.observe(this) { food ->
             food ?: return@observe
 
-            binding.tvFoodDetailName.text = food.name
-            binding.tvFoodDetailDescription.text = food.description
-            binding.tvFoodDetailCategory.text = food.category
-            // KOTLIN CONCEPT: Custom getter called as a property
-            binding.tvFoodDetailPrice.text = food.formattedPrice
-            binding.tvFoodDetailTime.text = "⏱ ${food.preparationTime}"
-            binding.ratingBarFood.rating = food.rating
-            binding.tvFoodDetailRatingValue.text = "%.1f / 5.0".format(food.rating)
+            binding.tvFoodDetailName.text         = food.name
+            binding.tvFoodDetailDescription.text  = food.description
+            binding.tvFoodDetailCategory.text     = food.category
+            binding.tvFoodDetailPrice.text        = food.formattedPrice
+            binding.tvFoodDetailTime.text         = "⏱ ${food.preparationTime}"
+            binding.ratingBarFood.rating          = food.rating
+            binding.tvFoodDetailRatingValue.text  = "%.1f / 5.0".format(food.rating)
             binding.tvFoodDetailAvailability.text = food.availabilityLabel
 
-            val colorRes = getPlaceholderColor(food.id.value)
-            binding.ivFoodDetailImage.setBackgroundColor(getColor(colorRes))
-            binding.tvFoodDetailImageInitial.text = food.name.first().uppercase()
+            if (food.imageUrl.isNotBlank()) {
+                binding.ivFoodDetailImageView.visibility = View.VISIBLE
+                binding.tvFoodDetailImageInitial.visibility = View.GONE
+                binding.ivFoodDetailImageView.load(food.imageUrl) {
+                    crossfade(true)
+                    listener(
+                        onError = { _, _ ->
+                            binding.ivFoodDetailImageView.visibility = View.GONE
+                            binding.tvFoodDetailImageInitial.text = food.name.first().uppercase()
+                            binding.tvFoodDetailImageInitial.visibility = View.VISIBLE
+                            binding.ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id.value)))
+                        }
+                    )
+                }
+            } else {
+                binding.tvFoodDetailImageInitial.text = food.name.first().uppercase()
+                binding.ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id.value)))
+            }
         }
 
         viewModel.orderAdded.observe(this) { added ->
             if (added) {
-                Toast.makeText(
-                    this,
-                    "¡Agregado al pedido! 🛒",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "¡Agregado al pedido! 🛒", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -91,6 +105,6 @@ class FoodDetailActivity : AppCompatActivity() {
             com.microsol.myappzegel.R.color.poster_red,
             com.microsol.myappzegel.R.color.poster_orange
         )
-        return colors[(id - 1) % colors.size]
+        return colors[(id - 1).coerceAtLeast(0) % colors.size]
     }
 }

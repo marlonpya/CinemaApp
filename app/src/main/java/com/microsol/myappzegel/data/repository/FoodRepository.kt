@@ -11,6 +11,6 @@ import com.microsol.myappzegel.data.model.FoodId
 // Each interface stays focused on a single responsibility.
 // ─────────────────────────────────────────────────────────────────────────────
 interface FoodRepository {
-    fun getFoods(): List<Food>
-    fun getFoodById(id: FoodId): Food?
+    suspend fun getFoods(): List<Food>
+    suspend fun getFoodById(id: FoodId): Food?
 }

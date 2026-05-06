@@ -29,8 +29,8 @@ class GetMoviesUseCase(
     private val repository: MovieRepository
 ) {
     // Returns all movies from the repository
-    operator fun invoke(): List<Movie> = repository.getMovies()
+    suspend operator fun invoke(): List<Movie> = repository.getMovies()
 
     // Overload: find a single movie by id
-    operator fun invoke(id: MovieId): Movie? = repository.getMovieById(id)
+    suspend operator fun invoke(id: MovieId): Movie? = repository.getMovieById(id)
 }

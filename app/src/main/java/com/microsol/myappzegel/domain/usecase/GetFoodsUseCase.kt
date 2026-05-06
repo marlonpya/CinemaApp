@@ -16,7 +16,7 @@ import com.microsol.myappzegel.data.repository.FoodRepository
 class GetFoodsUseCase(
     private val repository: FoodRepository
 ) {
-    operator fun invoke(): List<Food> = repository.getFoods()
+    suspend operator fun invoke(): List<Food> = repository.getFoods()
 
-    operator fun invoke(id: FoodId): Food? = repository.getFoodById(id)
+    suspend operator fun invoke(id: FoodId): Food? = repository.getFoodById(id)
 }

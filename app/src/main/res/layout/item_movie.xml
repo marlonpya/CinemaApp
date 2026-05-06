@@ -18,12 +18,20 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Poster placeholder — colored background + letter initial -->
+        <!-- Poster placeholder — colored background + letter initial (fallback) -->
         <FrameLayout
             android:id="@+id/ivMoviePoster"
             android:layout_width="match_parent"
             android:layout_height="140dp"
             android:contentDescription="@string/cd_movie_poster">
+
+            <ImageView
+                android:id="@+id/ivMoviePosterImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/cd_movie_poster"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tvMoviePosterInitial"

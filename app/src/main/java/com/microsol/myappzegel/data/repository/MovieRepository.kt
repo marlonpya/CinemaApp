@@ -13,6 +13,6 @@ import com.microsol.myappzegel.data.model.MovieId
 // version later without touching use-cases or ViewModels.
 // ─────────────────────────────────────────────────────────────────────────────
 interface MovieRepository {
-    fun getMovies(): List<Movie>
-    fun getMovieById(id: MovieId): Movie?
+    suspend fun getMovies(): List<Movie>
+    suspend fun getMovieById(id: MovieId): Movie?
 }

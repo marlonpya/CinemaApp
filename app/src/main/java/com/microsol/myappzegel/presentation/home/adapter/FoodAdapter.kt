@@ -1,19 +1,16 @@
 package com.microsol.myappzegel.presentation.home.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.microsol.myappzegel.R
 import com.microsol.myappzegel.data.model.Food
 import com.microsol.myappzegel.databinding.ItemFoodBinding
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FoodAdapter follows the exact same MVVM + lambda pattern as MovieAdapter.
-// Reading both adapters side-by-side shows students the consistent structure
-// that Clean Architecture enables.
-// ─────────────────────────────────────────────────────────────────────────────
 class FoodAdapter(
-    private val onFoodClick: (Food) -> Unit   // KOTLIN CONCEPT: lambda parameter
+    private val onFoodClick: (Food) -> Unit
 ) : RecyclerView.Adapter<FoodAdapter.ViewHolder>() {
 
     private var foods: List<Food> = emptyList()
@@ -35,7 +32,6 @@ class FoodAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(foods[position])
         holder.itemView.setOnClickListener {
-            // KOTLIN CONCEPT: Lambda invocation — passes the clicked Food object
             onFoodClick(foods[position])
         }
     }
@@ -46,23 +42,33 @@ class FoodAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(food: Food) {
-            // KOTLIN CONCEPT: Destructuring in function body
-            // We can destructure a data class anywhere we have an instance.
-            val (id, name, description, category, price) = food
-
-            binding.tvFoodName.text = name
-            binding.tvFoodCategory.text = category
-            // `formattedPrice` is our custom getter — called as a property
-            binding.tvFoodPrice.text = food.formattedPrice
-            binding.tvFoodRating.text = "★ ${food.rating}"
-            binding.tvFoodTime.text = food.preparationTime
+            binding.tvFoodName.text         = food.name
+            binding.tvFoodCategory.text     = food.category
+            binding.tvFoodPrice.text        = food.formattedPrice
+            binding.tvFoodRating.text       = "★ ${"%.1f".format(food.rating)}"
+            binding.tvFoodTime.text         = food.preparationTime
             binding.tvFoodAvailability.text = food.availabilityLabel
 
-            val colorRes = getPlaceholderColor(id.value)
-            binding.ivFoodImage.setBackgroundColor(
-                binding.root.context.getColor(colorRes)
-            )
-            binding.tvFoodImageInitial.text = name.first().uppercase()
+            if (food.imageUrl.isNotBlank()) {
+                binding.ivFoodImageView.visibility    = View.VISIBLE
+                binding.tvFoodImageInitial.visibility = View.GONE
+                binding.ivFoodImageView.load(food.imageUrl) {
+                    crossfade(true)
+                    listener(
+                        onError = { _, _ -> showFallback(food) }
+                    )
+                }
+            } else {
+                showFallback(food)
+            }
+        }
+
+        private fun showFallback(food: Food) {
+            binding.ivFoodImageView.visibility    = View.GONE
+            binding.tvFoodImageInitial.visibility = View.VISIBLE
+            binding.tvFoodImageInitial.text       = food.name.first().uppercase()
+            val colorRes = getPlaceholderColor(food.id.value)
+            binding.ivFoodImage.setBackgroundColor(binding.root.context.getColor(colorRes))
         }
     }
 
@@ -77,6 +83,6 @@ class FoodAdapter(
             R.color.poster_red,
             R.color.poster_orange
         )
-        return colors[(id - 1) % colors.size]
+        return colors[(id - 1).coerceAtLeast(0) % colors.size]
     }
 }

@@ -52,6 +52,29 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <!-- Loading indicator — visible while data is being fetched -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:paddingHorizontal="20dp"
+            android:visibility="gone" />
+
+        <!-- Error message — visible when a network error occurs -->
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="8dp"
+            android:background="#33FF5252"
+            android:padding="12dp"
+            android:textColor="#FF5252"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
         <!-- ─── SEARCH BAR (UI only) ────────────────────────────────────── -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
