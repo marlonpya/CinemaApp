@@ -9,7 +9,7 @@
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![MVVM](https://img.shields.io/badge/Architecture-MVVM-blue?style=for-the-badge)
-![Clean Architecture](https://img.shields.io/badge/Clean-Architecture-orange?style=for-the-badge)
+![Etapa 1](https://img.shields.io/badge/Refactor-Etapa%201-orange?style=for-the-badge)
 ![minSdk](https://img.shields.io/badge/minSdk-24-green?style=for-the-badge)
 ![TMDb](https://img.shields.io/badge/API-TMDb-01B4E4?style=for-the-badge)
 ![TheMealDB](https://img.shields.io/badge/API-TheMealDB-F9A825?style=for-the-badge)
@@ -42,15 +42,37 @@ El objetivo principal es que los estudiantes que están comenzando con el desarr
 
 - Entender la estructura de un proyecto Android real
 - Aplicar los conceptos fundamentales de Kotlin
-- Comprender la arquitectura **Clean Architecture + MVVM**
+- Comprender la arquitectura **MVVM + Repository Pattern**
 - Practicar con **Coroutines**, **Retrofit**, **LiveData** y **RecyclerView**
 - Ver cómo integrar APIs REST reales de forma limpia y segura
 
 ---
 
+> ### 📌 Estado actual: Refactor Etapa 1
+>
+> Este proyecto está en su versión **pedagógica simplificada (Etapa 1)**. El objetivo es que los estudiantes entiendan las bases antes de avanzar a arquitecturas más complejas.
+>
+> **Lo que se simplificó respecto a la versión anterior:**
+> - Se eliminaron los **Use Cases** — el ViewModel habla directamente con el Repository
+> - Se eliminaron los **Mappers** como archivos separados — el mapeo DTO → modelo vive en el RepositoryImpl
+> - Se eliminaron las **value classes** (`MovieId`, `FoodId`) — los IDs son `Int` planos
+> - Se reemplazó **ViewBinding** en el código por `findByViewId` — más explícito para aprender
+> - Los **adapters** ahora usan `ListAdapter` con `DiffUtil` en lugar de `notifyDataSetChanged()`
+> - Las interfaces de **Repository** viven en `domain/repository` (contrato de dominio)
+> - Los **modelos de dominio** (`Movie`, `Food`) viven en `domain/model`
+>
+> **Lo que se mantiene igual:**
+> - MVVM con ViewModel + LiveData
+> - Repository Pattern
+> - ViewModelFactory manual
+> - Retrofit + Coroutines
+> - Manejo de errores y estado de carga
+
+---
+
 ## ✨ Funcionalidades
 
-- 🎬 **Explorar películas y series** — Lista horizontal con pósters reales desde TMDb
+- 🎬 **Explorar películas** — Lista horizontal con pósters reales desde TMDb
 - 🍔 **Explorar comidas** — Lista vertical con imágenes reales desde TheMealDB
 - 🔍 **Barra de búsqueda** — Interfaz visual (preparada para futuras búsquedas)
 - 📄 **Detalle de película** — Título, descripción, director, duración, género y calificación reales
@@ -74,44 +96,44 @@ El objetivo principal es que los estudiantes que están comenzando con el desarr
 
 ## 🏛️ Arquitectura
 
-Este proyecto implementa **Clean Architecture** dividida en tres capas:
+Este proyecto implementa **MVVM + Repository Pattern** (Etapa 1) dividido en tres capas:
 
 ```
 ┌─────────────────────────────────────────────┐
 │            PRESENTATION LAYER               │  ← Activities, ViewModels, Adapters
-│        (Lo que el usuario ve y toca)        │
+│        (Lo que el usuario ve y toca)        │    findViewById · ListAdapter · LiveData
 ├─────────────────────────────────────────────┤
-│               DOMAIN LAYER                  │  ← Casos de uso (Use Cases)
-│          (Las reglas del negocio)           │
+│               DOMAIN LAYER                  │  ← Modelos limpios + contratos Repository
+│          (Las reglas del negocio)           │    domain/model · domain/repository
 ├─────────────────────────────────────────────┤
-│                DATA LAYER                   │  ← Modelos, Repositorios, APIs, DTOs
+│                DATA LAYER                   │  ← Implementaciones + API + DTOs
 │         (De dónde vienen los datos)         │
 │   remote/ → RetrofitClient, ApiServices     │
 │   dto/    → MovieDto, MealDto               │
-│   mapper/ → toDomain() extension functions  │
+│   repository/ → RepositoryImpl (mapeo aquí) │
 └─────────────────────────────────────────────┘
 ```
 
-### ¿Por qué Clean Architecture?
+### ¿Por qué esta arquitectura?
 
 - Cada capa tiene **una sola responsabilidad** (Principio S de SOLID)
 - Las capas internas **no conocen** a las capas externas
-- El código es más **fácil de probar** y mantener
+- El código es más **fácil de entender y mantener**
 - Cambiar la fuente de datos (ej. de una API a otra) **no afecta** la UI
 
-### Patrón MVVM con Coroutines
+### Patrón MVVM con Repository (Etapa 1)
 
 ```
-VISTA (Activity)  ──observa──▶  VIEWMODEL  ──suspend──▶  USE CASE  ──suspend──▶  REPOSITORY
-       │                          viewModelScope                                      │
-       │                          launch { }                                    Retrofit API
+VISTA (Activity)  ──observa──▶  VIEWMODEL  ──suspend──▶  REPOSITORY
+       │                          viewModelScope                │
+       │                          launch { }             Retrofit API
        └──────── eventos ──────────────┘
 ```
 
-- **View** (Activity): Solo muestra datos y captura eventos del usuario
-- **ViewModel**: Lanza coroutines, mantiene `isLoading` y `error` como LiveData
-- **Use Case**: `suspend operator fun invoke()` — delega al repositorio
-- **Repository**: Llama a la API con `suspend fun`, mapea DTOs al dominio
+- **View** (Activity): Solo muestra datos y captura eventos del usuario. Usa `findByViewId`.
+- **ViewModel**: Lanza coroutines, mantiene `isLoading` y `error` como LiveData. Depende del Repository directamente.
+- **Repository interface** (domain): Define el contrato de datos — qué puede pedir el ViewModel.
+- **RepositoryImpl** (data): Llama a la API con `suspend fun`, mapea DTOs al modelo de dominio de forma inline.
 
 ---
 
@@ -121,47 +143,42 @@ VISTA (Activity)  ──observa──▶  VIEWMODEL  ──suspend──▶  USE
 app/src/main/java/com/microsol/myappzegel/
 │
 ├── 📂 data/
-│   ├── 📂 model/
-│   │   ├── Movie.kt              ← Data class de película + value class MovieId
-│   │   └── Food.kt               ← Data class de comida + getter personalizado
 │   ├── 📂 remote/
-│   │   ├── RetrofitClient.kt     ← Singleton con dos instancias Retrofit (TMDb + MealDB)
-│   │   ├── TmdbApiService.kt     ← Interfaz Retrofit para TMDb
-│   │   ├── MealDbApiService.kt   ← Interfaz Retrofit para TheMealDB
+│   │   ├── RetrofitClient.kt         ← Singleton con dos instancias Retrofit (TMDb + MealDB)
+│   │   ├── TmdbApiService.kt         ← Interfaz Retrofit para TMDb
+│   │   ├── MealDbApiService.kt       ← Interfaz Retrofit para TheMealDB
 │   │   └── 📂 dto/
-│   │       ├── MovieDto.kt       ← DTOs: MovieDto, TvShowDto, GenreDto, CreditsResponse
-│   │       └── MealDto.kt        ← DTO: MealDto, MealListResponse
-│   ├── 📂 mapper/
-│   │   ├── MovieMapper.kt        ← MovieDto/TvShowDto.toDomain()
-│   │   └── MealMapper.kt         ← MealDto.toDomain()
+│   │       ├── MovieDto.kt           ← DTOs: MovieDto, MovieDetailDto, TvShowDto, GenreDto
+│   │       └── MealDto.kt            ← DTO: MealDto, MealListResponse
 │   └── 📂 repository/
-│       ├── MovieRepository.kt        ← Interfaz del repositorio (suspend fun)
-│       ├── FoodRepository.kt         ← Interfaz del repositorio (suspend fun)
-│       ├── MovieRepositoryImpl.kt    ← Llama a TMDb API con coroutines
-│       └── FoodRepositoryImpl.kt     ← Llama a TheMealDB API con coroutines
+│       ├── MovieRepositoryImpl.kt    ← Llama a TMDb API · mapea DTO → Movie inline
+│       └── FoodRepositoryImpl.kt     ← Llama a TheMealDB API · mapea DTO → Food inline
 │
 ├── 📂 domain/
-│   └── 📂 usecase/
-│       ├── GetMoviesUseCase.kt   ← suspend operator fun invoke()
-│       └── GetFoodsUseCase.kt    ← suspend operator fun invoke()
+│   ├── 📂 model/
+│   │   ├── Movie.kt                  ← data class Movie (id: Int)
+│   │   └── Food.kt                   ← data class Food con formattedPrice y availabilityLabel
+│   └── 📂 repository/
+│       ├── MovieRepository.kt        ← Interfaz del contrato (suspend fun)
+│       └── FoodRepository.kt         ← Interfaz del contrato (suspend fun)
 │
 ├── 📂 presentation/
 │   ├── 📂 home/
-│   │   ├── HomeViewModel.kt          ← viewModelScope.launch, isLoading, error
-│   │   ├── HomeViewModelFactory.kt
+│   │   ├── HomeViewModel.kt          ← viewModelScope.launch · isLoading · error
+│   │   ├── HomeViewModelFactory.kt   ← Recibe MovieRepository + FoodRepository
 │   │   └── 📂 adapter/
-│   │       ├── MovieAdapter.kt   ← Carga pósters con Coil
-│   │       └── FoodAdapter.kt    ← Carga imágenes con Coil
+│   │       ├── MovieAdapter.kt       ← ListAdapter + DiffUtil · findByViewId · Coil
+│   │       └── FoodAdapter.kt        ← ListAdapter + DiffUtil · findByViewId · Coil
 │   ├── 📂 moviedetail/
-│   │   ├── MovieDetailActivity.kt    ← Carga imagen con Coil, observa error/loading
-│   │   ├── MovieDetailViewModel.kt
+│   │   ├── MovieDetailActivity.kt    ← findByViewId · ViewModelProvider · Coil
+│   │   ├── MovieDetailViewModel.kt   ← Recibe MovieRepository directamente
 │   │   └── MovieDetailViewModelFactory.kt
 │   └── 📂 fooddetail/
-│       ├── FoodDetailActivity.kt     ← Carga imagen con Coil, observa error/loading
-│       ├── FoodDetailViewModel.kt
+│       ├── FoodDetailActivity.kt     ← findByViewId · ViewModelProvider · Coil
+│       ├── FoodDetailViewModel.kt    ← Recibe FoodRepository directamente
 │       └── FoodDetailViewModelFactory.kt
 │
-└── MainActivity.kt   ← Pantalla principal (Home)
+└── MainActivity.kt   ← Pantalla principal (Home) · findByViewId · ViewModelProvider
 ```
 
 ---
@@ -171,21 +188,19 @@ app/src/main/java/com/microsol/myappzegel/
 | Concepto | Dónde se usa | Descripción breve |
 |---|---|---|
 | `data class` | `Movie.kt`, `Food.kt`, DTOs | Clase que solo guarda datos; genera `equals()`, `toString()`, `copy()` automáticamente |
-| `value class` | `MovieId`, `FoodId` | Envuelve un primitivo sin costo extra en memoria (type-safety) |
 | `val` vs `var` | En todos los archivos | `val` = inmutable (no cambia), `var` = mutable (puede cambiar) |
-| Custom getter | `Food.formattedPrice` | Propiedad calculada que se computa cada vez que se accede |
+| Custom getter | `Food.formattedPrice`, `availabilityLabel` | Propiedad calculada que se computa cada vez que se accede, sin campo de respaldo |
 | `interface` | `MovieRepository`, `FoodRepository` | Define un contrato que las clases deben cumplir |
 | Lambda `(T) -> Unit` | Adapters (onClick) | Función anónima pasada como parámetro para manejar clics |
-| Destructuring | Dentro de adapters | Descompone un `data class` en variables: `val (id, title) = movie` |
-| `suspend fun` | Repositorios, Use Cases | Función que puede pausarse sin bloquear el hilo principal |
-| `operator fun invoke()` | Use cases | Permite llamar un objeto como función: `getMoviesUseCase()` |
+| `suspend fun` | Repositorios, ViewModels | Función que puede pausarse sin bloquear el hilo principal |
 | `viewModelScope.launch` | ViewModels | Lanza una coroutine ligada al ciclo de vida del ViewModel |
-| `coroutineScope` + `async` | RepositoryImpl | Ejecuta llamadas a la API en paralelo y espera todas con `await()` |
+| `try/catch` | ViewModels | Manejo de errores de red dentro de coroutines |
 | `companion object` | Activities de detalle | Equivale a los campos `static` de Java |
 | `@SerializedName` | DTOs | Mapea campos JSON con nombres distintos a propiedades Kotlin |
-| Extension function | Mappers (`toDomain()`) | Añade métodos a clases existentes sin modificarlas |
 | `object` singleton | `RetrofitClient` | Una sola instancia compartida en toda la app |
 | `by lazy` | `RetrofitClient` | Inicialización diferida: se crea solo cuando se necesita por primera vez |
+| `DiffUtil.ItemCallback` | Adapters | Compara listas eficientemente para actualizar solo los items que cambiaron |
+| `ListAdapter` | `MovieAdapter`, `FoodAdapter` | Adapter moderno que usa DiffUtil automáticamente al llamar `submitList()` |
 
 ---
 
@@ -194,7 +209,7 @@ app/src/main/java/com/microsol/myappzegel/
 ### Requisitos previos
 
 - ✅ Android Studio **Meerkat** (2025.1) o superior
-- ✅ JDK 17 o superior
+- ✅ JDK 21 o superior
 - ✅ Dispositivo físico o emulador con **Android 7.0 (API 24)** o superior
 - ✅ Conexión a Internet (para las APIs)
 
@@ -240,42 +255,44 @@ Este proyecto consume la **API de TMDb**, que requiere una clave de acceso.
 
 ## 🎓 Propósito de Aprendizaje
 
-Este proyecto fue creado para que los estudiantes puedan:
+Este proyecto (Etapa 1) fue creado para que los estudiantes puedan:
 
-- 🏗️ **Entender la arquitectura** de una app Android real con Clean Architecture + MVVM
-- 🔤 **Practicar Kotlin** con ejemplos concretos de cada concepto del lenguaje
-- 📱 **Conocer los componentes** principales: `RecyclerView`, `ViewModel`, `LiveData`, `ViewBinding`
+- 🏗️ **Entender MVVM** con ViewModel, LiveData y Repository Pattern
+- 📱 **Conocer los componentes** principales: `RecyclerView`, `ViewModel`, `LiveData`, `findByViewId`
 - 🌐 **Integrar APIs REST** usando Retrofit, OkHttp y Coroutines
 - 🔄 **Ver cómo fluye la información** desde la red hasta la pantalla
 - 🧱 **Aplicar principios SOLID** de forma natural en el código
+- 🧩 **Entender el Repository Pattern** como abstracción de la fuente de datos
 
 ### Lo que aprenderás leyendo este código
 
-1. Cómo separar responsabilidades en capas
+1. Cómo separar responsabilidades entre Activity, ViewModel y Repository
 2. Por qué el ViewModel sobrevive a la rotación de pantalla
 3. Cómo las interfaces permiten cambiar implementaciones sin tocar el resto del código
-4. La diferencia entre una `data class` y una clase normal
+4. La diferencia entre un DTO y un modelo de dominio
 5. Cómo pasar datos entre pantallas con `Intent` extras
 6. Cómo hacer llamadas de red asíncronas con `suspend fun` y `viewModelScope`
-7. Cómo mapear respuestas JSON (DTOs) a modelos de dominio limpios
-8. Cómo cargar imágenes desde URLs con Coil
+7. Cómo cargar imágenes desde URLs con Coil
+8. Por qué `ListAdapter` con `DiffUtil` es más eficiente que `notifyDataSetChanged()`
 
 ---
 
-## 🔮 Mejoras Futuras
+## 🔮 Hoja de Ruta del Refactor
 
-Estas son ideas para extender el proyecto una vez que domines los conceptos básicos:
+| Etapa | Estado | Contenido |
+|---|---|---|
+| **Etapa 1** | ✅ **Actual** | MVVM · Repository · ViewModelFactory manual · `findByViewId` · `ListAdapter` |
+| Etapa 2 | ⏳ Pendiente | `sealed class UiState` · manejo de errores robusto · Use Cases · Mapper classes |
+| Etapa 3 | ⏳ Pendiente | Hilt · Navigation Component · testing con fake repositories |
+| Etapa 4 | ⏳ Pendiente | Jetpack Compose · Flow · Room |
 
-- [x] 🌐 Conectar a una API real — **¡Completado! TMDb + TheMealDB integrados**
+### Mejoras adicionales sugeridas
+
 - [ ] 🔍 Implementar la barra de búsqueda funcional con el endpoint `/search/multi`
 - [ ] 🗄️ Agregar persistencia local con **Room Database**
 - [ ] 🔑 Implementar autenticación con **Firebase Auth**
-- [ ] 🧭 Migrar la navegación a **Jetpack Navigation Component**
-- [ ] 💉 Implementar inyección de dependencias con **Hilt**
-- [ ] 🧪 Agregar pruebas unitarias con **JUnit** y **MockK**
-- [ ] 🎨 Migrar la UI a **Jetpack Compose**
-- [ ] 🛒 Implementar un carrito de pedidos funcional con **StateFlow**
-- [ ] 📄 Agregar paginación con **Paging 3**
+- [ ] 🧪 Agregar pruebas unitarias con **JUnit** y fake repositories
+- [ ] 🛒 Implementar un carrito de pedidos funcional
 
 ---
 
@@ -310,15 +327,37 @@ The main goal is to help students who are starting Android development to:
 
 - Understand the structure of a real Android project
 - Apply fundamental Kotlin concepts
-- Understand **Clean Architecture + MVVM**
+- Understand **MVVM + Repository Pattern**
 - Practice with **Coroutines**, **Retrofit**, **LiveData**, and **RecyclerView**
 - See how to integrate real REST APIs cleanly and securely
 
 ---
 
+> ### 📌 Current state: Refactor Stage 1
+>
+> This project is in its **simplified pedagogical version (Stage 1)**. The goal is for students to understand the fundamentals before advancing to more complex architectures.
+>
+> **What was simplified from the previous version:**
+> - **Use Cases removed** — ViewModel talks directly to the Repository
+> - **Mapper files removed** — DTO → model mapping lives inline inside RepositoryImpl
+> - **Value classes removed** (`MovieId`, `FoodId`) — IDs are plain `Int`
+> - **ViewBinding replaced** in code by `findByViewId` — more explicit for learning
+> - **Adapters** now use `ListAdapter` with `DiffUtil` instead of `notifyDataSetChanged()`
+> - **Repository interfaces** live in `domain/repository` (domain contract)
+> - **Domain models** (`Movie`, `Food`) live in `domain/model`
+>
+> **What remains the same:**
+> - MVVM with ViewModel + LiveData
+> - Repository Pattern
+> - Manual ViewModelFactory
+> - Retrofit + Coroutines
+> - Error handling and loading state
+
+---
+
 ## ✨ Features
 
-- 🎬 **Browse movies & TV shows** — Horizontal list with real posters from TMDb
+- 🎬 **Browse movies** — Horizontal list with real posters from TMDb
 - 🍔 **Browse food** — Vertical list with real food images from TheMealDB
 - 🔍 **Search bar** — Visual UI element (ready for future search implementation)
 - 📄 **Movie detail** — Real title, description, director, runtime, genre, and rating
@@ -342,44 +381,44 @@ The main goal is to help students who are starting Android development to:
 
 ## 🏛️ Architecture
 
-This project implements **Clean Architecture** divided into three layers:
+This project implements **MVVM + Repository Pattern** (Stage 1) divided into three layers:
 
 ```
 ┌─────────────────────────────────────────────┐
 │            PRESENTATION LAYER               │  ← Activities, ViewModels, Adapters
-│           (What the user sees)              │
+│           (What the user sees)              │    findViewById · ListAdapter · LiveData
 ├─────────────────────────────────────────────┤
-│               DOMAIN LAYER                  │  ← Use Cases
-│             (Business rules)                │
+│               DOMAIN LAYER                  │  ← Clean models + Repository contracts
+│             (Business rules)                │    domain/model · domain/repository
 ├─────────────────────────────────────────────┤
-│                DATA LAYER                   │  ← Models, Repositories, APIs, DTOs
+│                DATA LAYER                   │  ← Implementations + API + DTOs
 │          (Where data comes from)            │
 │   remote/ → RetrofitClient, ApiServices     │
 │   dto/    → MovieDto, MealDto               │
-│   mapper/ → toDomain() extension functions  │
+│   repository/ → RepositoryImpl (maps here) │
 └─────────────────────────────────────────────┘
 ```
 
-### Why Clean Architecture?
+### Why this architecture?
 
 - Each layer has **a single responsibility** (SOLID's S principle)
 - Inner layers **do not know** about outer layers
-- Code is easier to **test and maintain**
+- Code is easier to **understand and maintain**
 - Swapping data sources **does not affect** the UI
 
-### MVVM Pattern with Coroutines
+### MVVM Pattern with Repository (Stage 1)
 
 ```
-VIEW (Activity)  ──observes──▶  VIEWMODEL  ──suspend──▶  USE CASE  ──suspend──▶  REPOSITORY
-      │                          viewModelScope                                       │
-      │                          launch { }                                     Retrofit API
+VIEW (Activity)  ──observes──▶  VIEWMODEL  ──suspend──▶  REPOSITORY
+      │                          viewModelScope                 │
+      │                          launch { }              Retrofit API
       └────────── events ──────────────┘
 ```
 
-- **View** (Activity): Only displays data and captures user events
-- **ViewModel**: Launches coroutines, exposes `isLoading` and `error` as LiveData
-- **Use Case**: `suspend operator fun invoke()` — delegates to the repository
-- **Repository**: Calls the API with `suspend fun`, maps DTOs to domain models
+- **View** (Activity): Only displays data and captures user events. Uses `findByViewId`.
+- **ViewModel**: Launches coroutines, exposes `isLoading` and `error` as LiveData. Depends directly on the Repository.
+- **Repository interface** (domain): Defines the data contract — what the ViewModel can request.
+- **RepositoryImpl** (data): Calls the API with `suspend fun`, maps DTOs to domain models inline.
 
 ---
 
@@ -389,47 +428,42 @@ VIEW (Activity)  ──observes──▶  VIEWMODEL  ──suspend──▶  USE
 app/src/main/java/com/microsol/myappzegel/
 │
 ├── 📂 data/
-│   ├── 📂 model/
-│   │   ├── Movie.kt              ← Movie data class + MovieId value class
-│   │   └── Food.kt               ← Food data class + custom getter
 │   ├── 📂 remote/
-│   │   ├── RetrofitClient.kt     ← Singleton with two Retrofit instances (TMDb + MealDB)
-│   │   ├── TmdbApiService.kt     ← Retrofit interface for TMDb
-│   │   ├── MealDbApiService.kt   ← Retrofit interface for TheMealDB
+│   │   ├── RetrofitClient.kt         ← Singleton with two Retrofit instances (TMDb + MealDB)
+│   │   ├── TmdbApiService.kt         ← Retrofit interface for TMDb
+│   │   ├── MealDbApiService.kt       ← Retrofit interface for TheMealDB
 │   │   └── 📂 dto/
-│   │       ├── MovieDto.kt       ← DTOs: MovieDto, TvShowDto, GenreDto, CreditsResponse
-│   │       └── MealDto.kt        ← DTO: MealDto, MealListResponse
-│   ├── 📂 mapper/
-│   │   ├── MovieMapper.kt        ← MovieDto/TvShowDto.toDomain()
-│   │   └── MealMapper.kt         ← MealDto.toDomain()
+│   │       ├── MovieDto.kt           ← DTOs: MovieDto, MovieDetailDto, TvShowDto, GenreDto
+│   │       └── MealDto.kt            ← DTO: MealDto, MealListResponse
 │   └── 📂 repository/
-│       ├── MovieRepository.kt        ← Repository interface (suspend fun)
-│       ├── FoodRepository.kt         ← Repository interface (suspend fun)
-│       ├── MovieRepositoryImpl.kt    ← Calls TMDb API with coroutines
-│       └── FoodRepositoryImpl.kt     ← Calls TheMealDB API with coroutines
+│       ├── MovieRepositoryImpl.kt    ← Calls TMDb API · maps DTO → Movie inline
+│       └── FoodRepositoryImpl.kt     ← Calls TheMealDB API · maps DTO → Food inline
 │
 ├── 📂 domain/
-│   └── 📂 usecase/
-│       ├── GetMoviesUseCase.kt   ← suspend operator fun invoke()
-│       └── GetFoodsUseCase.kt    ← suspend operator fun invoke()
+│   ├── 📂 model/
+│   │   ├── Movie.kt                  ← data class Movie (id: Int)
+│   │   └── Food.kt                   ← data class Food with formattedPrice + availabilityLabel
+│   └── 📂 repository/
+│       ├── MovieRepository.kt        ← Repository contract interface (suspend fun)
+│       └── FoodRepository.kt         ← Repository contract interface (suspend fun)
 │
 ├── 📂 presentation/
 │   ├── 📂 home/
-│   │   ├── HomeViewModel.kt          ← viewModelScope.launch, isLoading, error
-│   │   ├── HomeViewModelFactory.kt
+│   │   ├── HomeViewModel.kt          ← viewModelScope.launch · isLoading · error
+│   │   ├── HomeViewModelFactory.kt   ← Takes MovieRepository + FoodRepository
 │   │   └── 📂 adapter/
-│   │       ├── MovieAdapter.kt   ← Loads posters with Coil
-│   │       └── FoodAdapter.kt    ← Loads food images with Coil
+│   │       ├── MovieAdapter.kt       ← ListAdapter + DiffUtil · findByViewId · Coil
+│   │       └── FoodAdapter.kt        ← ListAdapter + DiffUtil · findByViewId · Coil
 │   ├── 📂 moviedetail/
-│   │   ├── MovieDetailActivity.kt    ← Loads image with Coil, observes error/loading
-│   │   ├── MovieDetailViewModel.kt
+│   │   ├── MovieDetailActivity.kt    ← findByViewId · ViewModelProvider · Coil
+│   │   ├── MovieDetailViewModel.kt   ← Takes MovieRepository directly
 │   │   └── MovieDetailViewModelFactory.kt
 │   └── 📂 fooddetail/
-│       ├── FoodDetailActivity.kt     ← Loads image with Coil, observes error/loading
-│       ├── FoodDetailViewModel.kt
+│       ├── FoodDetailActivity.kt     ← findByViewId · ViewModelProvider · Coil
+│       ├── FoodDetailViewModel.kt    ← Takes FoodRepository directly
 │       └── FoodDetailViewModelFactory.kt
 │
-└── MainActivity.kt   ← Home screen entry point
+└── MainActivity.kt   ← Home screen · findByViewId · ViewModelProvider
 ```
 
 ---
@@ -439,21 +473,19 @@ app/src/main/java/com/microsol/myappzegel/
 | Concept | Where used | Brief description |
 |---|---|---|
 | `data class` | `Movie.kt`, `Food.kt`, DTOs | Class that only holds data; auto-generates `equals()`, `toString()`, `copy()` |
-| `value class` | `MovieId`, `FoodId` | Wraps a primitive without memory overhead (type-safety) |
 | `val` vs `var` | Throughout all files | `val` = immutable (read-only), `var` = mutable (can change) |
-| Custom getter | `Food.formattedPrice` | Computed property re-evaluated every time it is accessed |
+| Custom getter | `Food.formattedPrice`, `availabilityLabel` | Computed property re-evaluated every time it is accessed, no backing field |
 | `interface` | `MovieRepository`, `FoodRepository` | Defines a contract that implementing classes must fulfill |
 | Lambda `(T) -> Unit` | Adapters (onClick) | Anonymous function passed as a parameter to handle clicks |
-| Destructuring | Inside adapters | Unpacks a `data class` into variables: `val (id, title) = movie` |
-| `suspend fun` | Repositories, Use Cases | Function that can pause without blocking the main thread |
-| `operator fun invoke()` | Use cases | Allows calling an object like a function: `getMoviesUseCase()` |
+| `suspend fun` | Repositories, ViewModels | Function that can pause without blocking the main thread |
 | `viewModelScope.launch` | ViewModels | Launches a coroutine tied to the ViewModel lifecycle |
-| `coroutineScope` + `async` | RepositoryImpl | Runs API calls in parallel and awaits all results |
+| `try/catch` | ViewModels | Error handling for network failures inside coroutines |
 | `companion object` | Detail activities | Equivalent to Java's `static` fields |
 | `@SerializedName` | DTOs | Maps JSON fields with underscore names to Kotlin properties |
-| Extension function | Mappers (`toDomain()`) | Adds methods to existing classes without modifying them |
 | `object` singleton | `RetrofitClient` | One shared instance across the entire app |
 | `by lazy` | `RetrofitClient` | Deferred initialization: created only when first needed |
+| `DiffUtil.ItemCallback` | Adapters | Efficiently compares old and new lists to update only changed items |
+| `ListAdapter` | `MovieAdapter`, `FoodAdapter` | Modern adapter that uses DiffUtil automatically when `submitList()` is called |
 
 ---
 
@@ -462,7 +494,7 @@ app/src/main/java/com/microsol/myappzegel/
 ### Prerequisites
 
 - ✅ Android Studio **Meerkat** (2025.1) or higher
-- ✅ JDK 17 or higher
+- ✅ JDK 21 or higher
 - ✅ Physical device or emulator running **Android 7.0 (API 24)** or higher
 - ✅ Internet connection (for the APIs)
 
@@ -508,42 +540,44 @@ This project consumes the **TMDb API**, which requires an access token.
 
 ## 🎓 Learning Purpose
 
-This project was created so students can:
+This project (Stage 1) was created so students can:
 
-- 🏗️ **Understand architecture** of a real Android app using Clean Architecture + MVVM
-- 🔤 **Practice Kotlin** with concrete examples of each language concept
-- 📱 **Learn key components**: `RecyclerView`, `ViewModel`, `LiveData`, `ViewBinding`
+- 🏗️ **Understand MVVM** with ViewModel, LiveData and Repository Pattern
+- 📱 **Learn key components**: `RecyclerView`, `ViewModel`, `LiveData`, `findByViewId`
 - 🌐 **Integrate REST APIs** using Retrofit, OkHttp, and Coroutines
 - 🔄 **See how data flows** from the network all the way to the screen
 - 🧱 **Apply SOLID principles** naturally within the codebase
+- 🧩 **Understand Repository Pattern** as an abstraction over the data source
 
 ### What you will learn by reading this code
 
-1. How to separate responsibilities into layers
+1. How to separate responsibilities between Activity, ViewModel, and Repository
 2. Why the ViewModel survives screen rotation
 3. How interfaces let you swap implementations without touching other code
-4. The difference between a `data class` and a regular class
+4. The difference between a DTO and a domain model
 5. How to pass data between screens using `Intent` extras
 6. How to make async network calls with `suspend fun` and `viewModelScope`
-7. How to map JSON responses (DTOs) to clean domain models
-8. How to load images from URLs with Coil
+7. How to load images from URLs with Coil
+8. Why `ListAdapter` with `DiffUtil` is more efficient than `notifyDataSetChanged()`
 
 ---
 
-## 🔮 Future Improvements
+## 🔮 Refactor Roadmap
 
-Ideas to extend the project once you have mastered the basics:
+| Stage | Status | Contents |
+|---|---|---|
+| **Stage 1** | ✅ **Current** | MVVM · Repository · Manual ViewModelFactory · `findByViewId` · `ListAdapter` |
+| Stage 2 | ⏳ Pending | `sealed class UiState` · robust error handling · Use Cases · Mapper classes |
+| Stage 3 | ⏳ Pending | Hilt · Navigation Component · testing with fake repositories |
+| Stage 4 | ⏳ Pending | Jetpack Compose · Flow · Room |
 
-- [x] 🌐 Connect to a real API — **Done! TMDb + TheMealDB integrated**
+### Additional suggested improvements
+
 - [ ] 🔍 Implement functional search using the `/search/multi` endpoint
 - [ ] 🗄️ Add local persistence with **Room Database**
 - [ ] 🔑 Implement authentication with **Firebase Auth**
-- [ ] 🧭 Migrate navigation to **Jetpack Navigation Component**
-- [ ] 💉 Implement dependency injection with **Hilt**
-- [ ] 🧪 Add unit tests with **JUnit** and **MockK**
-- [ ] 🎨 Migrate the UI to **Jetpack Compose**
-- [ ] 🛒 Build a functional shopping cart with **StateFlow**
-- [ ] 📄 Add pagination with **Paging 3**
+- [ ] 🧪 Add unit tests with **JUnit** and fake repositories
+- [ ] 🛒 Build a functional shopping cart
 
 ---
 

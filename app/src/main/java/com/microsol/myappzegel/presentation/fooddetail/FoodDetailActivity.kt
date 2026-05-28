@@ -2,14 +2,19 @@ package com.microsol.myappzegel.presentation.fooddetail
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.RatingBar
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.lifecycle.ViewModelProvider
 import coil.load
+import com.microsol.myappzegel.R
 import com.microsol.myappzegel.data.remote.RetrofitClient
 import com.microsol.myappzegel.data.repository.FoodRepositoryImpl
-import com.microsol.myappzegel.databinding.ActivityFoodDetailBinding
-import com.microsol.myappzegel.domain.usecase.GetFoodsUseCase
 
 class FoodDetailActivity : AppCompatActivity() {
 
@@ -17,28 +22,52 @@ class FoodDetailActivity : AppCompatActivity() {
         const val EXTRA_FOOD_ID = "extra_food_id"
     }
 
-    private lateinit var binding: ActivityFoodDetailBinding
+    private lateinit var ivFoodDetailImage: FrameLayout
+    private lateinit var ivFoodDetailImageView: ImageView
+    private lateinit var tvFoodDetailImageInitial: TextView
+    private lateinit var btnBack: Button
+    private lateinit var cardFoodContent: CardView
+    private lateinit var tvFoodDetailName: TextView
+    private lateinit var tvFoodDetailCategory: TextView
+    private lateinit var tvFoodDetailAvailability: TextView
+    private lateinit var tvFoodDetailPrice: TextView
+    private lateinit var tvFoodDetailTime: TextView
+    private lateinit var ratingBarFood: RatingBar
+    private lateinit var tvFoodDetailRatingValue: TextView
+    private lateinit var tvFoodDetailDescription: TextView
+    private lateinit var btnAddToOrder: Button
 
-    private val viewModel: FoodDetailViewModel by viewModels {
-        FoodDetailViewModelFactory(
-            GetFoodsUseCase(FoodRepositoryImpl(RetrofitClient.mealDbApi))
-        )
-    }
+    private lateinit var viewModel: FoodDetailViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityFoodDetailBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_food_detail)
 
-        binding.btnBack.setOnClickListener { finish() }
+        ivFoodDetailImage = findViewById(R.id.ivFoodDetailImage)
+        ivFoodDetailImageView = findViewById(R.id.ivFoodDetailImageView)
+        tvFoodDetailImageInitial = findViewById(R.id.tvFoodDetailImageInitial)
+        btnBack = findViewById(R.id.btnBack)
+        cardFoodContent = findViewById(R.id.cardFoodContent)
+        tvFoodDetailName = findViewById(R.id.tvFoodDetailName)
+        tvFoodDetailCategory = findViewById(R.id.tvFoodDetailCategory)
+        tvFoodDetailAvailability = findViewById(R.id.tvFoodDetailAvailability)
+        tvFoodDetailPrice = findViewById(R.id.tvFoodDetailPrice)
+        tvFoodDetailTime = findViewById(R.id.tvFoodDetailTime)
+        ratingBarFood = findViewById(R.id.ratingBarFood)
+        tvFoodDetailRatingValue = findViewById(R.id.tvFoodDetailRatingValue)
+        tvFoodDetailDescription = findViewById(R.id.tvFoodDetailDescription)
+        btnAddToOrder = findViewById(R.id.btnAddToOrder)
+
+        btnBack.setOnClickListener { finish() }
+        btnAddToOrder.setOnClickListener { viewModel.addToOrder() }
+
+        val foodRepository = FoodRepositoryImpl(RetrofitClient.mealDbApi)
+        val factory = FoodDetailViewModelFactory(foodRepository)
+        viewModel = ViewModelProvider(this, factory)[FoodDetailViewModel::class.java]
 
         val foodId = intent.getIntExtra(EXTRA_FOOD_ID, -1)
         if (foodId != -1) {
             viewModel.loadFood(foodId)
-        }
-
-        binding.btnAddToOrder.setOnClickListener {
-            viewModel.addToOrder()
         }
 
         observeViewModel()
@@ -46,7 +75,7 @@ class FoodDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         viewModel.isLoading.observe(this) { loading ->
-            binding.cardFoodContent.visibility = if (loading) View.INVISIBLE else View.VISIBLE
+            cardFoodContent.visibility = if (loading) View.INVISIBLE else View.VISIBLE
         }
 
         viewModel.error.observe(this) { errorMsg ->
@@ -58,32 +87,32 @@ class FoodDetailActivity : AppCompatActivity() {
         viewModel.food.observe(this) { food ->
             food ?: return@observe
 
-            binding.tvFoodDetailName.text         = food.name
-            binding.tvFoodDetailDescription.text  = food.description
-            binding.tvFoodDetailCategory.text     = food.category
-            binding.tvFoodDetailPrice.text        = food.formattedPrice
-            binding.tvFoodDetailTime.text         = "⏱ ${food.preparationTime}"
-            binding.ratingBarFood.rating          = food.rating
-            binding.tvFoodDetailRatingValue.text  = "%.1f / 5.0".format(food.rating)
-            binding.tvFoodDetailAvailability.text = food.availabilityLabel
+            tvFoodDetailName.text = food.name
+            tvFoodDetailDescription.text = food.description
+            tvFoodDetailCategory.text = food.category
+            tvFoodDetailPrice.text = food.formattedPrice
+            tvFoodDetailTime.text = "⏱ ${food.preparationTime}"
+            ratingBarFood.rating = food.rating
+            tvFoodDetailRatingValue.text = "%.1f / 5.0".format(food.rating)
+            tvFoodDetailAvailability.text = food.availabilityLabel
 
             if (food.imageUrl.isNotBlank()) {
-                binding.ivFoodDetailImageView.visibility = View.VISIBLE
-                binding.tvFoodDetailImageInitial.visibility = View.GONE
-                binding.ivFoodDetailImageView.load(food.imageUrl) {
+                ivFoodDetailImageView.visibility = View.VISIBLE
+                tvFoodDetailImageInitial.visibility = View.GONE
+                ivFoodDetailImageView.load(food.imageUrl) {
                     crossfade(true)
                     listener(
                         onError = { _, _ ->
-                            binding.ivFoodDetailImageView.visibility = View.GONE
-                            binding.tvFoodDetailImageInitial.text = food.name.first().uppercase()
-                            binding.tvFoodDetailImageInitial.visibility = View.VISIBLE
-                            binding.ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id.value)))
+                            ivFoodDetailImageView.visibility = View.GONE
+                            tvFoodDetailImageInitial.text = food.name.first().uppercase()
+                            tvFoodDetailImageInitial.visibility = View.VISIBLE
+                            ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id)))
                         }
                     )
                 }
             } else {
-                binding.tvFoodDetailImageInitial.text = food.name.first().uppercase()
-                binding.ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id.value)))
+                tvFoodDetailImageInitial.text = food.name.first().uppercase()
+                ivFoodDetailImage.setBackgroundColor(getColor(getPlaceholderColor(food.id)))
             }
         }
 
@@ -96,14 +125,14 @@ class FoodDetailActivity : AppCompatActivity() {
 
     private fun getPlaceholderColor(id: Int): Int {
         val colors = listOf(
-            com.microsol.myappzegel.R.color.poster_orange,
-            com.microsol.myappzegel.R.color.poster_red,
-            com.microsol.myappzegel.R.color.poster_teal,
-            com.microsol.myappzegel.R.color.poster_blue,
-            com.microsol.myappzegel.R.color.poster_purple,
-            com.microsol.myappzegel.R.color.poster_green,
-            com.microsol.myappzegel.R.color.poster_red,
-            com.microsol.myappzegel.R.color.poster_orange
+            R.color.poster_orange,
+            R.color.poster_red,
+            R.color.poster_teal,
+            R.color.poster_blue,
+            R.color.poster_purple,
+            R.color.poster_green,
+            R.color.poster_red,
+            R.color.poster_orange
         )
         return colors[(id - 1).coerceAtLeast(0) % colors.size]
     }

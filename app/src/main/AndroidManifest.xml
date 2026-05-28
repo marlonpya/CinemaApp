@@ -16,7 +16,7 @@
 
         <!-- Home Screen — app entry point -->
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.home.HomeActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -29,13 +29,13 @@
         <activity
             android:name=".presentation.moviedetail.MovieDetailActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".presentation.home.HomeActivity" />
 
         <!-- Food Detail Screen -->
         <activity
             android:name=".presentation.fooddetail.FoodDetailActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".presentation.home.HomeActivity" />
 
     </application>
 

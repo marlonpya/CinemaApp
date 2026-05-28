@@ -3,73 +3,78 @@ package com.microsol.myappzegel.presentation.home.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.microsol.myappzegel.R
-import com.microsol.myappzegel.data.model.Food
-import com.microsol.myappzegel.databinding.ItemFoodBinding
+import com.microsol.myappzegel.domain.model.Food
 
+// ListAdapter uses DiffUtil to update only the items that actually changed
 class FoodAdapter(
     private val onFoodClick: (Food) -> Unit
-) : RecyclerView.Adapter<FoodAdapter.ViewHolder>() {
-
-    private var foods: List<Food> = emptyList()
-
-    fun submitList(newFoods: List<Food>) {
-        foods = newFoods
-        notifyDataSetChanged()
-    }
+) : ListAdapter<Food, FoodAdapter.ViewHolder>(FoodDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemFoodBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return ViewHolder(binding)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_food, parent, false)
+        return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(foods[position])
-        holder.itemView.setOnClickListener {
-            onFoodClick(foods[position])
-        }
+        holder.bind(getItem(position))
     }
 
-    override fun getItemCount(): Int = foods.size
-
-    inner class ViewHolder(private val binding: ItemFoodBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val ivFoodImage = view.findViewById<FrameLayout>(R.id.ivFoodImage)
+        private val ivFoodImageView = view.findViewById<ImageView>(R.id.ivFoodImageView)
+        private val tvFoodImageInitial = view.findViewById<TextView>(R.id.tvFoodImageInitial)
+        private val tvFoodName = view.findViewById<TextView>(R.id.tvFoodName)
+        private val tvFoodCategory = view.findViewById<TextView>(R.id.tvFoodCategory)
+        private val tvFoodRating = view.findViewById<TextView>(R.id.tvFoodRating)
+        private val tvFoodTime = view.findViewById<TextView>(R.id.tvFoodTime)
+        private val tvFoodPrice = view.findViewById<TextView>(R.id.tvFoodPrice)
+        private val tvFoodAvailability = view.findViewById<TextView>(R.id.tvFoodAvailability)
 
         fun bind(food: Food) {
-            binding.tvFoodName.text         = food.name
-            binding.tvFoodCategory.text     = food.category
-            binding.tvFoodPrice.text        = food.formattedPrice
-            binding.tvFoodRating.text       = "★ ${"%.1f".format(food.rating)}"
-            binding.tvFoodTime.text         = food.preparationTime
-            binding.tvFoodAvailability.text = food.availabilityLabel
+            tvFoodName.text = food.name
+            tvFoodCategory.text = food.category
+            tvFoodPrice.text = food.formattedPrice
+            tvFoodRating.text = "★ ${"%.1f".format(food.rating)}"
+            tvFoodTime.text = food.preparationTime
+            tvFoodAvailability.text = food.availabilityLabel
 
             if (food.imageUrl.isNotBlank()) {
-                binding.ivFoodImageView.visibility    = View.VISIBLE
-                binding.tvFoodImageInitial.visibility = View.GONE
-                binding.ivFoodImageView.load(food.imageUrl) {
+                ivFoodImageView.visibility = View.VISIBLE
+                tvFoodImageInitial.visibility = View.GONE
+                ivFoodImageView.load(food.imageUrl) {
                     crossfade(true)
-                    listener(
-                        onError = { _, _ -> showFallback(food) }
-                    )
+                    listener(onError = { _, _ -> showFallback(food) })
                 }
             } else {
                 showFallback(food)
             }
+
+            itemView.setOnClickListener { onFoodClick(food) }
         }
 
         private fun showFallback(food: Food) {
-            binding.ivFoodImageView.visibility    = View.GONE
-            binding.tvFoodImageInitial.visibility = View.VISIBLE
-            binding.tvFoodImageInitial.text       = food.name.first().uppercase()
-            val colorRes = getPlaceholderColor(food.id.value)
-            binding.ivFoodImage.setBackgroundColor(binding.root.context.getColor(colorRes))
+            ivFoodImageView.visibility = View.GONE
+            tvFoodImageInitial.visibility = View.VISIBLE
+            tvFoodImageInitial.text = food.name.first().uppercase()
+            ivFoodImage.setBackgroundColor(
+                itemView.context.getColor(getPlaceholderColor(food.id))
+            )
         }
+    }
+
+    // DiffUtil.ItemCallback tells ListAdapter how to compare items
+    class FoodDiffCallback : DiffUtil.ItemCallback<Food>() {
+        override fun areItemsTheSame(oldItem: Food, newItem: Food) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: Food, newItem: Food) = oldItem == newItem
     }
 
     private fun getPlaceholderColor(id: Int): Int {

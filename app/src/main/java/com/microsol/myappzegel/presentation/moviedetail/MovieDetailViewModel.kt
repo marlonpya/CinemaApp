@@ -4,13 +4,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.microsol.myappzegel.data.model.Movie
-import com.microsol.myappzegel.data.model.MovieId
-import com.microsol.myappzegel.domain.usecase.GetMoviesUseCase
+import com.microsol.myappzegel.domain.model.Movie
+import com.microsol.myappzegel.domain.repository.MovieRepository
 import kotlinx.coroutines.launch
 
 class MovieDetailViewModel(
-    private val getMoviesUseCase: GetMoviesUseCase
+    private val movieRepository: MovieRepository
 ) : ViewModel() {
 
     private val _movie = MutableLiveData<Movie?>()
@@ -27,7 +26,7 @@ class MovieDetailViewModel(
             _isLoading.value = true
             _error.value = null
             try {
-                _movie.value = getMoviesUseCase(MovieId(id))
+                _movie.value = movieRepository.getMovieById(id)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error al cargar la película"
             } finally {

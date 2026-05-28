@@ -2,14 +2,19 @@ package com.microsol.myappzegel.presentation.moviedetail
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.RatingBar
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.lifecycle.ViewModelProvider
 import coil.load
+import com.microsol.myappzegel.R
 import com.microsol.myappzegel.data.remote.RetrofitClient
 import com.microsol.myappzegel.data.repository.MovieRepositoryImpl
-import com.microsol.myappzegel.databinding.ActivityMovieDetailBinding
-import com.microsol.myappzegel.domain.usecase.GetMoviesUseCase
 
 class MovieDetailActivity : AppCompatActivity() {
 
@@ -17,20 +22,45 @@ class MovieDetailActivity : AppCompatActivity() {
         const val EXTRA_MOVIE_ID = "extra_movie_id"
     }
 
-    private lateinit var binding: ActivityMovieDetailBinding
+    private lateinit var ivDetailPoster: FrameLayout
+    private lateinit var ivDetailPosterImage: ImageView
+    private lateinit var tvDetailPosterInitial: TextView
+    private lateinit var btnBack: Button
+    private lateinit var cardContent: CardView
+    private lateinit var tvDetailTitle: TextView
+    private lateinit var tvDetailGenre: TextView
+    private lateinit var tvDetailYear: TextView
+    private lateinit var tvDetailDuration: TextView
+    private lateinit var tvDetailDirector: TextView
+    private lateinit var ratingBar: RatingBar
+    private lateinit var tvDetailRatingValue: TextView
+    private lateinit var tvDetailDescription: TextView
 
-    private val viewModel: MovieDetailViewModel by viewModels {
-        MovieDetailViewModelFactory(
-            GetMoviesUseCase(MovieRepositoryImpl(RetrofitClient.tmdbApi))
-        )
-    }
+    private lateinit var viewModel: MovieDetailViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMovieDetailBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_movie_detail)
 
-        binding.btnBack.setOnClickListener { finish() }
+        ivDetailPoster = findViewById(R.id.ivDetailPoster)
+        ivDetailPosterImage = findViewById(R.id.ivDetailPosterImage)
+        tvDetailPosterInitial = findViewById(R.id.tvDetailPosterInitial)
+        btnBack = findViewById(R.id.btnBack)
+        cardContent = findViewById(R.id.cardContent)
+        tvDetailTitle = findViewById(R.id.tvDetailTitle)
+        tvDetailGenre = findViewById(R.id.tvDetailGenre)
+        tvDetailYear = findViewById(R.id.tvDetailYear)
+        tvDetailDuration = findViewById(R.id.tvDetailDuration)
+        tvDetailDirector = findViewById(R.id.tvDetailDirector)
+        ratingBar = findViewById(R.id.ratingBar)
+        tvDetailRatingValue = findViewById(R.id.tvDetailRatingValue)
+        tvDetailDescription = findViewById(R.id.tvDetailDescription)
+
+        btnBack.setOnClickListener { finish() }
+
+        val movieRepository = MovieRepositoryImpl(RetrofitClient.tmdbApi)
+        val factory = MovieDetailViewModelFactory(movieRepository)
+        viewModel = ViewModelProvider(this, factory)[MovieDetailViewModel::class.java]
 
         val movieId = intent.getIntExtra(EXTRA_MOVIE_ID, -1)
         if (movieId != -1) {
@@ -42,7 +72,7 @@ class MovieDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         viewModel.isLoading.observe(this) { loading ->
-            binding.cardContent.visibility = if (loading) View.INVISIBLE else View.VISIBLE
+            cardContent.visibility = if (loading) View.INVISIBLE else View.VISIBLE
         }
 
         viewModel.error.observe(this) { errorMsg ->
@@ -54,50 +84,50 @@ class MovieDetailActivity : AppCompatActivity() {
         viewModel.movie.observe(this) { movie ->
             movie ?: return@observe
 
-            binding.tvDetailTitle.text       = movie.title
-            binding.tvDetailDescription.text = movie.description
-            binding.tvDetailGenre.text       = movie.genre
-            binding.tvDetailYear.text        = movie.year.toString()
-            binding.tvDetailDuration.text    = movie.duration
-            binding.ratingBar.rating         = movie.rating
-            binding.tvDetailRatingValue.text = "%.1f / 5.0".format(movie.rating)
+            tvDetailTitle.text = movie.title
+            tvDetailDescription.text = movie.description
+            tvDetailGenre.text = movie.genre
+            tvDetailYear.text = movie.year.toString()
+            tvDetailDuration.text = movie.duration
+            ratingBar.rating = movie.rating
+            tvDetailRatingValue.text = "%.1f / 5.0".format(movie.rating)
 
             if (movie.director.isNotBlank()) {
-                binding.tvDetailDirector.text = "Dir. ${movie.director}"
-                binding.tvDetailDirector.visibility = View.VISIBLE
+                tvDetailDirector.text = "Dir. ${movie.director}"
+                tvDetailDirector.visibility = View.VISIBLE
             } else {
-                binding.tvDetailDirector.visibility = View.GONE
+                tvDetailDirector.visibility = View.GONE
             }
 
             if (movie.imageUrl.isNotBlank()) {
-                binding.ivDetailPosterImage.visibility = View.VISIBLE
-                binding.tvDetailPosterInitial.visibility = View.GONE
-                binding.ivDetailPosterImage.load(movie.imageUrl) {
+                ivDetailPosterImage.visibility = View.VISIBLE
+                tvDetailPosterInitial.visibility = View.GONE
+                ivDetailPosterImage.load(movie.imageUrl) {
                     crossfade(true)
                     listener(
                         onError = { _, _ ->
-                            binding.ivDetailPosterImage.visibility = View.GONE
-                            binding.tvDetailPosterInitial.text = movie.title.first().uppercase()
-                            binding.tvDetailPosterInitial.visibility = View.VISIBLE
-                            binding.ivDetailPoster.setBackgroundColor(getColor(getPlaceholderColor(movie.id.value)))
+                            ivDetailPosterImage.visibility = View.GONE
+                            tvDetailPosterInitial.text = movie.title.first().uppercase()
+                            tvDetailPosterInitial.visibility = View.VISIBLE
+                            ivDetailPoster.setBackgroundColor(getColor(getPlaceholderColor(movie.id)))
                         }
                     )
                 }
             } else {
-                binding.tvDetailPosterInitial.text = movie.title.first().uppercase()
-                binding.ivDetailPoster.setBackgroundColor(getColor(getPlaceholderColor(movie.id.value)))
+                tvDetailPosterInitial.text = movie.title.first().uppercase()
+                ivDetailPoster.setBackgroundColor(getColor(getPlaceholderColor(movie.id)))
             }
         }
     }
 
     private fun getPlaceholderColor(id: Int): Int {
         val colors = listOf(
-            com.microsol.myappzegel.R.color.poster_red,
-            com.microsol.myappzegel.R.color.poster_blue,
-            com.microsol.myappzegel.R.color.poster_green,
-            com.microsol.myappzegel.R.color.poster_purple,
-            com.microsol.myappzegel.R.color.poster_orange,
-            com.microsol.myappzegel.R.color.poster_teal
+            R.color.poster_red,
+            R.color.poster_blue,
+            R.color.poster_green,
+            R.color.poster_purple,
+            R.color.poster_orange,
+            R.color.poster_teal
         )
         return colors[(id - 1).coerceAtLeast(0) % colors.size]
     }

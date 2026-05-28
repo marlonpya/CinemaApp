@@ -4,13 +4,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.microsol.myappzegel.data.model.Food
-import com.microsol.myappzegel.data.model.FoodId
-import com.microsol.myappzegel.domain.usecase.GetFoodsUseCase
+import com.microsol.myappzegel.domain.model.Food
+import com.microsol.myappzegel.domain.repository.FoodRepository
 import kotlinx.coroutines.launch
 
 class FoodDetailViewModel(
-    private val getFoodsUseCase: GetFoodsUseCase
+    private val foodRepository: FoodRepository
 ) : ViewModel() {
 
     private val _food = MutableLiveData<Food?>()
@@ -30,7 +29,7 @@ class FoodDetailViewModel(
             _isLoading.value = true
             _error.value = null
             try {
-                _food.value = getFoodsUseCase(FoodId(id))
+                _food.value = foodRepository.getFoodById(id)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error al cargar el plato"
             } finally {
