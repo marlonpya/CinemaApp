@@ -1,4 +1,4 @@
-package com.microsol.myappzegel.presentation.home
+package com.microsol.myappzegel.presentation.mvvm.home
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -37,21 +37,13 @@ class HomeViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-
             try {
                 coroutineScope {
-                    val moviesDeferred = async {
-                        movieRepository.getMovies()
-                    }
-
-                    val foodsDeferred = async {
-                        foodRepository.getFoods()
-                    }
-
+                    val moviesDeferred = async { movieRepository.getMovies() }
+                    val foodsDeferred = async { foodRepository.getFoods() }
                     _movies.value = moviesDeferred.await()
                     _foods.value = foodsDeferred.await()
                 }
-
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error al cargar los datos"
             } finally {

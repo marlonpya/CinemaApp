@@ -1,16 +1,14 @@
-package com.microsol.myappzegel.presentation.home.adapter
+package com.microsol.myappzegel.presentation.common.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.microsol.myappzegel.R
+import com.microsol.myappzegel.databinding.ItemMovieBinding
 import com.microsol.myappzegel.domain.model.Movie
 
 // ListAdapter uses DiffUtil to calculate the minimal set of changes needed
@@ -20,36 +18,29 @@ class MovieAdapter(
 ) : ListAdapter<Movie, MovieAdapter.ViewHolder>(MovieDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_movie, parent, false)
-        return ViewHolder(view)
+        val binding = ItemMovieBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val ivMoviePoster = view.findViewById<FrameLayout>(R.id.ivMoviePoster)
-        private val ivMoviePosterImage = view.findViewById<ImageView>(R.id.ivMoviePosterImage)
-        private val tvMoviePosterInitial = view.findViewById<TextView>(R.id.tvMoviePosterInitial)
-        private val tvMovieTitle = view.findViewById<TextView>(R.id.tvMovieTitle)
-        private val tvMovieGenre = view.findViewById<TextView>(R.id.tvMovieGenre)
-        private val tvMovieRating = view.findViewById<TextView>(R.id.tvMovieRating)
-        private val tvMovieYear = view.findViewById<TextView>(R.id.tvMovieYear)
-        private val tvMovieDuration = view.findViewById<TextView>(R.id.tvMovieDuration)
+    inner class ViewHolder(
+        private val binding: ItemMovieBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(movie: Movie) {
-            tvMovieTitle.text = movie.title
-            tvMovieGenre.text = movie.genre
-            tvMovieYear.text = movie.year.toString()
-            tvMovieRating.text = "★ ${"%.1f".format(movie.rating)}"
-            tvMovieDuration.text = movie.duration
+            binding.tvMovieTitle.text = movie.title
+            binding.tvMovieGenre.text = movie.genre
+            binding.tvMovieYear.text = movie.year.toString()
+            binding.tvMovieRating.text = "★ ${"%.1f".format(movie.rating)}"
+            binding.tvMovieDuration.text = movie.duration
 
             if (movie.imageUrl.isNotBlank()) {
-                ivMoviePosterImage.visibility = View.VISIBLE
-                tvMoviePosterInitial.visibility = View.GONE
-                ivMoviePosterImage.load(movie.imageUrl) {
+                binding.ivMoviePosterImage.visibility = View.VISIBLE
+                binding.tvMoviePosterInitial.visibility = View.GONE
+                binding.ivMoviePosterImage.load(movie.imageUrl) {
                     crossfade(true)
                     listener(onError = { _, _ -> showFallback(movie) })
                 }
@@ -57,15 +48,15 @@ class MovieAdapter(
                 showFallback(movie)
             }
 
-            itemView.setOnClickListener { onMovieClick(movie) }
+            binding.root.setOnClickListener { onMovieClick(movie) }
         }
 
         private fun showFallback(movie: Movie) {
-            ivMoviePosterImage.visibility = View.GONE
-            tvMoviePosterInitial.visibility = View.VISIBLE
-            tvMoviePosterInitial.text = movie.title.first().uppercase()
-            ivMoviePoster.setBackgroundColor(
-                itemView.context.getColor(getPlaceholderColor(movie.id))
+            binding.ivMoviePosterImage.visibility = View.GONE
+            binding.tvMoviePosterInitial.visibility = View.VISIBLE
+            binding.tvMoviePosterInitial.text = movie.title.first().uppercase()
+            binding.ivMoviePoster.setBackgroundColor(
+                binding.root.context.getColor(getPlaceholderColor(movie.id))
             )
         }
     }

@@ -1,4 +1,4 @@
-package com.microsol.myappzegel.presentation.moviedetail
+package com.microsol.myappzegel.presentation.mvvm.moviedetail
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

@@ -14,9 +14,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyAppZegel">
 
-        <!-- Home Screen — app entry point -->
+        <!-- ══════════════════════════════════════════════════════
+             MVVM — launcher principal
+             ══════════════════════════════════════════════════════ -->
         <activity
-            android:name=".presentation.home.HomeActivity"
+            android:name=".presentation.mvvm.home.HomeActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -25,17 +27,32 @@
             </intent-filter>
         </activity>
 
-        <!-- Movie Detail Screen -->
         <activity
-            android:name=".presentation.moviedetail.MovieDetailActivity"
+            android:name=".presentation.mvvm.moviedetail.MovieDetailActivity"
             android:exported="false"
-            android:parentActivityName=".presentation.home.HomeActivity" />
+            android:parentActivityName=".presentation.mvvm.home.HomeActivity" />
 
-        <!-- Food Detail Screen -->
         <activity
-            android:name=".presentation.fooddetail.FoodDetailActivity"
+            android:name=".presentation.mvvm.fooddetail.FoodDetailActivity"
             android:exported="false"
-            android:parentActivityName=".presentation.home.HomeActivity" />
+            android:parentActivityName=".presentation.mvvm.home.HomeActivity" />
+
+        <!-- ══════════════════════════════════════════════════════
+             MVP — cambiar HomeMvpActivity a MAIN/LAUNCHER para probar
+             ══════════════════════════════════════════════════════ -->
+        <activity
+            android:name=".presentation.mvp.home.HomeMvpActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".presentation.mvp.moviedetail.MovieDetailMvpActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.mvp.home.HomeMvpActivity" />
+
+        <activity
+            android:name=".presentation.mvp.fooddetail.FoodDetailMvpActivity"
+            android:exported="false"
+            android:parentActivityName=".presentation.mvp.home.HomeMvpActivity" />
 
     </application>
 

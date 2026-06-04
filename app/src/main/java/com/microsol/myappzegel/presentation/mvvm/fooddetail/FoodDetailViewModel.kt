@@ -1,4 +1,4 @@
-package com.microsol.myappzegel.presentation.fooddetail
+package com.microsol.myappzegel.presentation.mvvm.fooddetail
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

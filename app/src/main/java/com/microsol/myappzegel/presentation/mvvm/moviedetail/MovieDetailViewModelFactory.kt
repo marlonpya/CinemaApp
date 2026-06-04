@@ -1,10 +1,9 @@
-package com.microsol.myappzegel.presentation.moviedetail
+package com.microsol.myappzegel.presentation.mvvm.moviedetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.microsol.myappzegel.domain.repository.MovieRepository
 
-// Factory needed to pass constructor params to the ViewModel
 class MovieDetailViewModelFactory(
     private val movieRepository: MovieRepository
 ) : ViewModelProvider.Factory {

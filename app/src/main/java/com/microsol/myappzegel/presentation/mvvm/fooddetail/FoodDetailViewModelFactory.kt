@@ -1,10 +1,9 @@
-package com.microsol.myappzegel.presentation.fooddetail
+package com.microsol.myappzegel.presentation.mvvm.fooddetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.microsol.myappzegel.domain.repository.FoodRepository
 
-// Factory needed to pass constructor params to the ViewModel
 class FoodDetailViewModelFactory(
     private val foodRepository: FoodRepository
 ) : ViewModelProvider.Factory {

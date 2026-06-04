@@ -1,4 +1,4 @@
-package com.microsol.myappzegel.presentation.home
+package com.microsol.myappzegel.presentation.mvvm.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

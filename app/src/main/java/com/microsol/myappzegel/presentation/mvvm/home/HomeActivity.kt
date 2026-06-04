@@ -1,51 +1,42 @@
-package com.microsol.myappzegel.presentation.home
+package com.microsol.myappzegel.presentation.mvvm.home
 
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.microsol.myappzegel.R
 import com.microsol.myappzegel.data.remote.RetrofitClient
 import com.microsol.myappzegel.data.repository.FoodRepositoryImpl
 import com.microsol.myappzegel.data.repository.MovieRepositoryImpl
-import com.microsol.myappzegel.presentation.fooddetail.FoodDetailActivity
-import com.microsol.myappzegel.presentation.home.adapter.FoodAdapter
-import com.microsol.myappzegel.presentation.home.adapter.MovieAdapter
-import com.microsol.myappzegel.presentation.moviedetail.MovieDetailActivity
+import com.microsol.myappzegel.databinding.ActivityMainBinding
+import com.microsol.myappzegel.presentation.common.adapter.FoodAdapter
+import com.microsol.myappzegel.presentation.common.adapter.MovieAdapter
+import com.microsol.myappzegel.presentation.mvvm.fooddetail.FoodDetailActivity
+import com.microsol.myappzegel.presentation.mvvm.moviedetail.MovieDetailActivity
 
 class HomeActivity : AppCompatActivity() {
 
-    private lateinit var rvMovies: RecyclerView
-    private lateinit var rvFoods: RecyclerView
-    private lateinit var progressBar: ProgressBar
-    private lateinit var tvError: TextView
-    private lateinit var viewModel: HomeViewModel
+    private lateinit var binding: ActivityMainBinding
 
     private val movieAdapter = MovieAdapter { movie ->
         val intent = Intent(this, MovieDetailActivity::class.java)
-        intent.putExtra(MovieDetailActivity.Companion.EXTRA_MOVIE_ID, movie.id)
+        intent.putExtra(MovieDetailActivity.EXTRA_MOVIE_ID, movie.id)
         startActivity(intent)
     }
 
     private val foodAdapter = FoodAdapter { food ->
         val intent = Intent(this, FoodDetailActivity::class.java)
-        intent.putExtra(FoodDetailActivity.Companion.EXTRA_FOOD_ID, food.id)
+        intent.putExtra(FoodDetailActivity.EXTRA_FOOD_ID, food.id)
         startActivity(intent)
     }
 
+    private lateinit var viewModel: HomeViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        rvMovies = findViewById(R.id.rvMovies)
-        rvFoods = findViewById(R.id.rvFoods)
-        progressBar = findViewById(R.id.progressBar)
-        tvError = findViewById(R.id.tvError)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         setupRecyclerViews()
 
@@ -59,26 +50,26 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
-        rvMovies.layoutManager = LinearLayoutManager(
+        binding.rvMovies.layoutManager = LinearLayoutManager(
             this, LinearLayoutManager.HORIZONTAL, false
         )
-        rvMovies.adapter = movieAdapter
+        binding.rvMovies.adapter = movieAdapter
 
-        rvFoods.layoutManager = LinearLayoutManager(this)
-        rvFoods.adapter = foodAdapter
+        binding.rvFoods.layoutManager = LinearLayoutManager(this)
+        binding.rvFoods.adapter = foodAdapter
     }
 
     private fun observeViewModel() {
         viewModel.isLoading.observe(this) { loading ->
-            progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         }
 
         viewModel.error.observe(this) { errorMsg ->
             if (!errorMsg.isNullOrBlank()) {
-                tvError.text = errorMsg
-                tvError.visibility = View.VISIBLE
+                binding.tvError.text = errorMsg
+                binding.tvError.visibility = View.VISIBLE
             } else {
-                tvError.visibility = View.GONE
+                binding.tvError.visibility = View.GONE
             }
         }
 
