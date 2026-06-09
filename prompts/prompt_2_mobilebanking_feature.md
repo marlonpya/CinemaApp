@@ -1,23 +1,43 @@
-# Prompt 2 — Crear Feature completo en `pe.com.interbank.mobilebanking`
+# Prompt 2 — Crear Feature completo en la app consumidora (`mobilebanking`)
 
-> **Uso:** Envía este prompt junto con la **misma imagen del diseño** al asistente de IA, **después** de haber generado el Composable con el Prompt 1.
+> **Uso:** Pega este prompt en el asistente de IA del proyecto `pe.com.interbank.mobilebanking`
+> junto con la imagen del diseño, **después** de haber generado el Composable con el Prompt 1.
 
 ---
 
 ## PROMPT
 
-Eres un experto en Android con Jetpack Compose y arquitectura MVI.
+Eres un experto en Android con Jetpack Compose y arquitectura MVI / Clean Architecture.
 
-Analiza la imagen adjunta. Ya existe un Composable en el design system `pe.interbank.ads.mobile.nodo.ui` que representa la UI de esta pantalla. Ahora necesitas generar **todos los archivos restantes** del feature en `pe.com.interbank.mobilebanking`, siguiendo la arquitectura MVI del proyecto.
+Antes de generar cualquier código, **explora y analiza este proyecto** para entender:
 
-### Reglas del proyecto `pe.com.interbank.mobilebanking`
+1. **Estructura de un feature existente** — localiza al menos un feature completo en el proyecto y observa cómo están organizadas sus carpetas y archivos (nombres, niveles de package, subcarpetas como `interactor/`, `domain/`, etc.).
+2. **Arquitectura y patrón de estado** — identifica el patrón exacto usado:
+   - Cómo se modela el estado de UI (`data class`, `sealed class`, campos individuales en el ViewModel, etc.)
+   - Cómo se modelan los intents / acciones del usuario
+   - Cómo se modelan los eventos de un solo disparo (navegación, snackbars, diálogos)
+3. **ViewModel** — observa:
+   - Qué expone (`StateFlow`, `SharedFlow`, `LiveData`, `Channel`, etc.)
+   - Cómo recibe las acciones del usuario (función `handleIntent`, funciones individuales, etc.)
+   - Cómo mutua el estado (`.update { }`, `.value =`, etc.)
+   - Cómo se inyectan las dependencias (Hilt, Koin, manual, factory, etc.)
+4. **Screen Composable** — observa cómo el Screen:
+   - Recoge el estado del ViewModel (`collectAsStateWithLifecycle`, `observeAsState`, etc.)
+   - Consume los eventos de un solo disparo (`LaunchedEffect`, `DisposableEffect`, etc.)
+   - Delega la renderización al Composable del design system
+5. **Inyección de dependencias** — identifica el framework o patrón usado (Hilt `@HiltViewModel`, Koin `viewModel { }`, `ViewModelFactory` manual, etc.) y réplicalo exactamente.
+6. **Nomenclatura** — prefijos, sufijos o convenciones de nombres de clases, funciones y archivos usados en los features existentes.
 
-**Package base del feature:** `pe.com.interbank.mobilebanking.feature.<nombre_del_feature>`
+---
+
+Ya existe un Composable en el design system `pe.interbank.ads.mobile.nodo.ui` que representa la UI de la imagen adjunta. Ahora genera **todos los archivos del feature** para esta pantalla en este proyecto, siguiendo **exactamente** los mismos patrones, convenciones y estilo de código encontrados.
 
 ### Estructura de archivos a generar
 
+Respeta la misma organización de carpetas que los features existentes. Como referencia orientativa (adáptala si el proyecto usa otra):
+
 ```
-pe/com/interbank/mobilebanking/feature/<nombreFeature>/
+feature/<nombreFeature>/
 ├── <NombreFeature>ViewModel.kt
 ├── <NombreFeature>Screen.kt
 └── interactor/
@@ -26,112 +46,49 @@ pe/com/interbank/mobilebanking/feature/<nombreFeature>/
     └── <NombreFeature>UiIntent.kt
 ```
 
-Infiere `<NombreFeature>` desde la imagen (usa PascalCase, sin prefijos, ej: `CardBenefit`, `TransactionDetail`, `PromoOffer`).
-
----
+Infiere `<NombreFeature>` a partir del diseño de la imagen (PascalCase, sin prefijos).
 
 ### Contrato de cada archivo
 
-#### 1. `<NombreFeature>UiState.kt`
-- `data class` con todos los campos que la pantalla necesita renderizar (textos, listas, flags de visibilidad, estados de carga).
-- Incluye `val isLoading: Boolean = false` y `val errorMessage: String? = null` siempre.
-- Valores por defecto para todos los campos.
+#### `UiState`
+- Modela todos los datos que la pantalla necesita renderizar.
+- Sigue el mismo patrón de modelado de estado que el proyecto (data class con defaults, sealed class, etc.).
+- Incluye siempre campos para indicar carga y error.
 
-```kotlin
-// Ejemplo de referencia
-data class ConfigurationUiState(
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    // ... campos propios del feature
-)
-```
+#### `UiIntent`
+- Representa todas las **acciones posibles del usuario** en esta pantalla.
+- Sigue el mismo patrón de intents del proyecto (`sealed class`, `sealed interface`, etc.).
 
-#### 2. `<NombreFeature>UiIntent.kt`
-- `sealed class` con todas las **acciones del usuario** que la pantalla puede disparar (clics, swipes, inputs).
-- Usa `object` para intents sin payload y `data class` para los que llevan datos.
+#### `UiEvent`
+- Representa **efectos de un solo disparo** (navegación, mensajes, diálogos).
+- Sigue el mismo patrón de eventos del proyecto.
 
-```kotlin
-// Ejemplo de referencia
-sealed class ConfigurationUiIntent {
-    object LoadData : ConfigurationUiIntent()
-    data class OnItemSelected(val id: String) : ConfigurationUiIntent()
-    object OnBackPressed : ConfigurationUiIntent()
-}
-```
+#### `ViewModel`
+- Sigue el mismo patrón de ViewModel del proyecto (flows, observables, etc.).
+- Inyecta dependencias usando el mismo framework/patrón encontrado.
+- No inyectes repositorios directamente; pasa siempre por use cases.
+- Infiere qué use cases son necesarios a partir del diseño.
 
-#### 3. `<NombreFeature>UiEvent.kt`
-- `sealed class` con **efectos de un solo disparo** que la pantalla debe consumir (navegación, snackbars, diálogos).
-- Usa `object` o `data class` según necesite payload.
-
-```kotlin
-// Ejemplo de referencia
-sealed class ConfigurationUiEvent {
-    object NavigateBack : ConfigurationUiEvent()
-    data class ShowError(val message: String) : ConfigurationUiEvent()
-    data class NavigateToDetail(val id: String) : ConfigurationUiEvent()
-}
-```
-
-#### 4. `<NombreFeature>ViewModel.kt`
-- Extiende `ViewModel()`.
-- Expone:
-  - `val uiState: StateFlow<NombreFeatureUiState>` (usando `MutableStateFlow` privado).
-  - `val uiEvent: SharedFlow<NombreFeatureUiEvent>` (usando `MutableSharedFlow` con `replay = 0`).
-- Función pública `fun handleIntent(intent: NombreFeatureUiIntent)` que despacha cada intent con un `when`.
-- Usa `viewModelScope.launch` para operaciones asíncronas.
-- Inyecta los use cases necesarios por constructor (infiere cuáles hacen falta a partir del diseño).
-- **No inyectes** repositorios directamente; siempre pasa por use cases.
-
-```kotlin
-// Ejemplo de referencia
-class ConfigurationViewModel(
-    private val getConfigurationUseCase: GetConfigurationUseCase
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(ConfigurationUiState())
-    val uiState: StateFlow<ConfigurationUiState> = _uiState.asStateFlow()
-
-    private val _uiEvent = MutableSharedFlow<ConfigurationUiEvent>()
-    val uiEvent: SharedFlow<ConfigurationUiEvent> = _uiEvent.asSharedFlow()
-
-    fun handleIntent(intent: ConfigurationUiIntent) {
-        when (intent) {
-            is ConfigurationUiIntent.LoadData -> loadData()
-            // ...
-        }
-    }
-
-    private fun loadData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            // ...
-        }
-    }
-}
-```
-
-#### 5. `<NombreFeature>Screen.kt`
-- Composable `@Composable fun <NombreFeature>Screen(viewModel: <NombreFeature>ViewModel = viewModel(), ...)`.
-- Recoge el estado con `val uiState by viewModel.uiState.collectAsStateWithLifecycle()`.
-- Observa eventos de un solo disparo con `LaunchedEffect(Unit) { viewModel.uiEvent.collect { ... } }`.
-- Llama al Composable de nodo usando el import: `import pe.interbank.ads.mobile.nodo.ui.components.<NombreComponente>.Nodo<NombreComponente>`.
-- El `Screen` **solo orquesta**; toda la lógica visual está en el Composable de nodo.
-- Maneja el estado `isLoading` con un indicador de progreso y `errorMessage` con un Snackbar o diálogo.
-- Incluye un `@Preview` con un `ViewModel` de vista previa (o `fakeViewModel`).
-
----
+#### `Screen`
+- Orquesta el estado, los eventos y el Composable del design system.
+- Sigue el mismo patrón de Screen encontrado en el proyecto.
+- Importa el Composable desde `pe.interbank.ads.mobile.nodo.ui`.
+- El Screen no contiene lógica de negocio ni lógica visual compleja.
+- Maneja los estados de carga y error de la misma forma que los otros screens del proyecto.
 
 ### Restricciones
 
-- No generes lógica de negocio en el `Screen`.
 - No generes tests en esta entrega.
-- Respeta los imports de ambos módulos: usa `pe.interbank.ads.mobile.nodo.ui.*` para UI y `pe.com.interbank.mobilebanking.*` para lógica.
-- No uses `LiveData`; solo `StateFlow` y `SharedFlow`.
-- Usa `kotlinx.coroutines.flow.update` para mutar el estado.
+- No inventes patrones nuevos; replica fielmente los ya existentes en el proyecto.
+- No importes la app consumidora desde el design system ni viceversa en direcciones incorrectas.
 
 ### Formato de entrega
 
-Genera **5 bloques de código** separados, cada uno con su nombre de archivo como título, en el orden:
+Al inicio de tu respuesta:
+- Lista los features existentes que analizaste como referencia.
+- Resume brevemente el patrón arquitectónico encontrado (ViewModel pattern, DI framework, tipo de flows).
+
+Luego genera los archivos en bloques de código separados, cada uno con su nombre como título, en el orden:
 1. `<NombreFeature>UiState.kt`
 2. `<NombreFeature>UiIntent.kt`
 3. `<NombreFeature>UiEvent.kt`
